@@ -1,0 +1,6 @@
+# gitignore for Node.js projects
+node_modules
+.cache
+
+# Application
+dist
