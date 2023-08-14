@@ -1,6 +1,14 @@
 import { Setting } from './setting';
 import { Timebox } from './timebox';
 
+export enum TransitionStatus {
+    OnFocus = 'on_focus',
+    FocusJustEnded = 'focus_just_ended',
+    OnRelax = 'on_relax',
+    RelaxJustEnded = 'relax_just_ended',
+    Completed = 'completed',
+}
+
 export class Cycle {
     private static _current_: Cycle | null = null;
     public static get current(): Cycle | null {
@@ -40,16 +48,21 @@ export class Cycle {
         this.relax.complete();
     }
 
-    // -- Update --
-    public getUpdate(now = Date.now()): {
-        notification: { id: string, opt: chrome.notifications.NotificationOptions<true> } | undefined,
-        badge: { text: string, color: { text: string, bg: string } } | undefined,
-        next: () => void,
-    } {
-        const notification = this.getNotification(now);
-        const badge = this.getBadge(now);
-        const next = this.getNextAction(now);
-        return { notification, badge, next };
+    // -- Status --
+    public getStatus(now = Date.now()): TransitionStatus {
+        if (now < this.focus.end) {
+            return TransitionStatus.OnFocus;
+        }
+        if (this.focus.endstate == null && now < this.relax.end) {
+            return TransitionStatus.FocusJustEnded;
+        }
+        if (now < this.relax.end) {
+            return TransitionStatus.OnRelax;
+        }
+        if (this.relax.endstate == null) {
+            return TransitionStatus.RelaxJustEnded;
+        }
+        return TransitionStatus.Completed;
     }
 
     // -- Log --
@@ -58,38 +71,42 @@ export class Cycle {
     }
 
     // -- Notification --
-    private getNotification(now = Date.now()): { id: string, opt: chrome.notifications.NotificationOptions<true> } | undefined {
-        if (now < this.focus.end) {
-            return;
+    public shouldNotify(status: TransitionStatus): boolean {
+        switch (status) {
+            case TransitionStatus.OnFocus:
+            case TransitionStatus.OnRelax:
+                return false;
+            case TransitionStatus.FocusJustEnded:
+            case TransitionStatus.RelaxJustEnded:
+            case TransitionStatus.Completed:
+                return true;
         }
-        if (this.focus.end <= now && this.focus.endstate == null) {
-            this.focus.complete();
+    }
+    public getNotification(status: TransitionStatus, now = Date.now()): { id: string, opt: chrome.notifications.NotificationOptions<true> } | undefined {
+        switch (status) {
+            case TransitionStatus.OnFocus:
+            case TransitionStatus.OnRelax:
+                return;
+        }
+        if (status == TransitionStatus.FocusJustEnded) {
             return {
                 id: 'timebox_focus_completed',
                 opt: {
                     type: 'basic',
-                    iconUrl: chrome.runtime.getURL('icons/icon_32.png'),
+                    iconUrl: chrome.runtime.getURL('icons/red/48.png'),
                     title: 'Congrats!',
                     message: 'Focus time completed',
                 },
-            }; // End-of-focus notification
+            };
         }
-        if (now < this.relax.end) {
-            return;
-        }
-        if (this.relax.end <= now && this.relax.endstate == null) {
-            this.relax.complete();
+        if (status == TransitionStatus.RelaxJustEnded) {
             return {
                 id: 'timebox_relax_completed',
                 opt: {
-                    type: 'list',
-                    iconUrl: chrome.runtime.getURL('icons/icon_32.png'),
-                    title: 'Got relaxed?',
+                    type: 'basic',
+                    iconUrl: chrome.runtime.getURL('icons/red/48.png'),
+                    title: 'Relaxed?',
                     message: 'Relax time completed',
-                    items: [
-                        { title: 'Start Next Cycle', message: 'Focus again' },
-                        { title: 'Exit for now', message: 'Terminate POMODORO to relax more' },
-                    ],
                 },
             }; // End-of-relax notification
         }
@@ -97,23 +114,15 @@ export class Cycle {
     }
 
     // -- Badge --
-    public getBadge(now = Date.now()): { text: string, color: { text: string, bg: string } } {
+    public getBadge(status: TransitionStatus, now = Date.now()): { text: string, color: { text: string, bg: string } } {
         const { focus, relax } = this;
         if (now < focus.end) {
             const min = Math.floor((focus.end - now) / 1000 / 60);
-            return { text: `${min}m`, color: { text: 'white', bg: 'blue' } };
+            return { text: `${min}`, color: { text: 'white', bg: 'blue' } };
         } else if (now < relax.end) {
             const min = Math.floor((relax.end - now) / 1000 / 60);
-            return { text: `${min}m`, color: { text: 'white', bg: 'cyan' } };
+            return { text: `${min}`, color: { text: 'white', bg: 'cyan' } };
         }
         return { text: '', color: { text: 'black', bg: 'white' } };
-    }
-
-    // -- NextAction --
-    private getNextAction(now = Date.now()): () => void {
-        if (this.relax.end <= now) {
-            return () => Cycle.clear();
-        }
-        return () => { };
     }
 }
