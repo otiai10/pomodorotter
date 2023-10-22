@@ -15,5 +15,8 @@
     "@types/chrome": "^0.0.243",
     "parcel-bundler": "^1.12.5",
     "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "chromite": "^0.0.7"
   }
 }

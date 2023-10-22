@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  chromite:
+    specifier: ^0.0.7
+    version: 0.0.7
+
 devDependencies:
   '@types/chrome':
     specifier: ^0.0.243
@@ -1900,6 +1905,10 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /chromite@0.0.7:
+    resolution: {integrity: sha512-Q4/YP/8dR12NmQaIkYo0TwrcozjdvyWTPZpVyxs8xLC1o0k6U1BDxPkVn/X6GEzxYBHljqdvdwJaNIUcDomKUA==}
+    dev: false
 
   /cipher-base@1.0.4:
     resolution: {integrity: sha512-Kkht5ye6ZGmwv40uUDZztayT2ThLQGfnj/T71N/XzeZeo3nf8foyW7zGTsPYkEya3m5f3cAypH+qe7YOrM1U2Q==}
