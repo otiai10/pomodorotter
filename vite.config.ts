@@ -19,8 +19,7 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js', // Remove hash from output file names
         assetFileNames: 'assets/[name].[ext]', // asset file names as well
-        preserveModules: false,
-      }
+      },
     }, 
   },
 })
