@@ -19,9 +19,9 @@
             "32":  "icons/red/32.png"
         },
         "default_title": "Start POMODORO!",
-        "default_popup": "popup.html"
+        "default_popup": "index.html"
     },
     "background": {
-        "service_worker": "dist/background.js"
+        "service_worker": "background.js"
     }
 }
